@@ -170,35 +170,53 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
         CGFloat xOffset = 0;
         NSUInteger index = 0;
         NSMutableArray *mutableBarViews = [NSMutableArray array];
-        for (NSNumber *key in [[self.chartDataDictionary allKeys] sortedArrayUsingSelector:@selector(compare:)])
-        {
+        for (NSNumber *key in [[self.chartDataDictionary allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
             UIView *barView = nil; // since all bars are visible at once, no need to cache this view
-            if ([self.dataSource respondsToSelector:@selector(barChartView:barViewAtIndex:)])
-            {
+            NSArray *backgroundColors = nil;
+
+            if ([self.dataSource respondsToSelector:@selector(barChartView:barViewAtIndex:)]) {
                 barView = [self.dataSource barChartView:self barViewAtIndex:index];
                 NSAssert(barView != nil, @"JBBarChartView // datasource function - (UIView *)barChartView:(JBBarChartView *)barChartView barViewAtIndex:(NSUInteger)index must return a non-nil UIView subclass");
-            }
-            else
-            {
+            } else {
                 barView = [[UIView alloc] init];
-                UIColor *backgroundColor = nil;
+                
 
-                if ([self.delegate respondsToSelector:@selector(barChartView:colorForBarViewAtIndex:)])
-                {
-                    backgroundColor = [self.delegate barChartView:self colorForBarViewAtIndex:index];
-                    NSAssert(backgroundColor != nil, @"JBBarChartView // delegate function - (UIColor *)barChartView:(JBBarChartView *)barChartView colorForBarViewAtIndex:(NSUInteger)index must return a non-nil UIColor");
+                if ([self.delegate respondsToSelector:@selector(barChartView:colorsForBarViewAtIndex:)]) {
+                    backgroundColors = [self.delegate barChartView:self colorsForBarViewAtIndex:index];
+                } else if ([self.delegate respondsToSelector:@selector(barChartView:colorForBarViewAtIndex:)]) {
+                    backgroundColors = @[[self.delegate barChartView:self colorForBarViewAtIndex:index]];
+                    NSAssert(backgroundColors != nil, @"JBBarChartView // delegate function - (UIColor *)barChartView:(JBBarChartView *)barChartView colorForBarViewAtIndex:(NSUInteger)index must return a non-nil UIColor");
+                } else {
+                    backgroundColors = @[kJBBarChartViewDefaultBarColor];
                 }
-                else
-                {
-                    backgroundColor = kJBBarChartViewDefaultBarColor;
-                }
-
-                barView.backgroundColor = backgroundColor;
             }
 
             CGFloat height = [self normalizedHeightForRawHeight:[self.chartDataDictionary objectForKey:key]];
             CGFloat extensionHeight = height > 0.0 ? kJBBarChartViewPopOffset : 0.0;
             barView.frame = CGRectMake(xOffset, self.bounds.size.height - height - self.footerView.frame.size.height, [self barWidth], height + extensionHeight);
+            
+            if ([backgroundColors count] == 1) {
+                barView.backgroundColor = backgroundColors[0];
+            } else {
+                barView.backgroundColor = nil;
+                CAGradientLayer *gradientLayer = [CAGradientLayer layer];
+                
+                [barView.layer setSublayers:nil];
+                
+                gradientLayer.frame = barView.bounds;
+                
+                NSMutableArray *gradientColors = [NSMutableArray new];
+                for (UIColor *color in backgroundColors) {
+                    [gradientColors addObject:(id)[color CGColor]];
+                }
+                gradientLayer.colors = gradientColors;
+                gradientLayer.startPoint = CGPointMake(0.5, 0.0);
+                gradientLayer.endPoint = CGPointMake(0.5, 1.0);
+                
+                [barView.layer insertSublayer:gradientLayer atIndex:1];
+            }
+
+            
             [mutableBarViews addObject:barView];
 			
             // Add new bar

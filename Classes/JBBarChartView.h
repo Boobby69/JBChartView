@@ -77,7 +77,7 @@
 - (void)didDeselectBarChartView:(JBBarChartView *)barChartView;
 
 /**
- *  If you already implement barChartView:barViewAtIndex: delegate - this method has no effect.
+ *  If you already implement barChartView:barViewAtIndex: delegate or barChartView:colorsForBarViewAtIndex: - this method has no effect.
  *  If a custom UIView isn't supplied, a flat bar will be made automatically (default color black).
  *
  *  Default: if none specified - calls barChartView:barViewAtIndex:.
@@ -88,6 +88,18 @@
  *  @return The color to be used to color a bar in the chart.
  */
 - (UIColor *)barChartView:(JBBarChartView *)barChartView colorForBarViewAtIndex:(NSUInteger)index;
+
+
+/**
+ *  If you already implement barChartView:barViewAtIndex: delegate - this method has no effect.
+ *  If a custom UIView isn't supplied, a flat bar will be made automatically (default color black).
+ *
+ *  @param barChartView The bar chart object requesting this information.
+ *  @param index        The 0-based index of a given bar (left to right, x-axis).
+ *
+ *  @return An array of colors for a top to bottom gradient.
+ */
+- (NSArray *)barChartView:(JBBarChartView *)barChartView colorsForBarViewAtIndex:(NSUInteger)index;
 
 /**
  *  The selection color to be overlayed on a bar during touch events.
